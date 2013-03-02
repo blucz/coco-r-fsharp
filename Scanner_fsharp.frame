@@ -1,0 +1,199 @@
+-->begin
+#light "off"
+-->namespace
+open System;
+open System.Text;
+open System.IO;
+open System.Collections.Generic;
+
+let post_dec r = 
+  let v = r-1 in v
+
+let post_inc r = 
+  let v = r+1 in v
+
+type Token = 
+	class
+		val kind : int			//token kind 
+		val pos : int			//token position in the source text (starting at 0)
+		val col : int			//token column (starting at 1)
+		val line : int			//token line (strating at 1)
+		val value : String		//token value
+		val mutable next : Token option //ML 2005-03-11 Tokens are kept in a linked list
+
+		new (k, p, c, l, v, n) = {kind = k; pos = p; col = c; line = l; value = v; next = n};
+end
+
+exception Result of string*int
+
+
+//Para a leitura do ficheiro, esta será uma função externa
+
+type Buffer = 
+	class
+	val EOF : int
+	val MAX_BUFFER_LENGTH : int 
+	val tr : TextReader
+	val mutable utf : bool
+	val mutable pos : int
+
+	new(tr_:TextReader) = {
+		EOF = (int Char.MaxValue) + 1;
+		MAX_BUFFER_LENGTH = 64 * 1024;
+		utf = false;
+		pos = 0;
+		tr = tr_;
+	}
+
+	member x.Read()= char (x.tr.Read())
+	member x.Peek_in() = char (x.tr.Peek())
+end 
+
+
+
+
+type scanner=
+	class
+	val mutable buffer : Buffer
+	val EOL : char
+	val mutable maxT : int
+	val mutable noSym : int
+	val charSetSize : int
+	val eofSym : int 
+	val mutable t : Token //current token
+	val mutable ch : int
+	val mutable col : int
+	val mutable line : int
+	val mutable oldEols : int
+
+	val mutable tval : StringBuilder 
+
+	val mutable start : Dictionary<int, int>
+
+	val mutable tokens : Token
+	val mutable pt : Token
+
+	val mutable tlen : int
+	val Impossible : System.Exception
+
+	val mutable lineStart : int
+
+        member x.Init() =
+-->initialization
+		for i = 0 to x.buffer.EOF-2 do 
+			if x.start.ContainsKey(i)=false then x.start.Add(i,0); 
+		done;
+
+		x.NextCh();
+		if (x.ch = 0xEF)
+		then(  // check optional byte order mark for UTF-8
+			x.NextCh();
+			let ch1 = x.ch in
+			x.NextCh(); 
+			let ch2 = x.ch in
+			if (ch1 <> 0xBB || ch2 <> 0xBF) then(
+					raise (new Exception (String.Format("illegal byte order mark: EF {0,2:X} {1,2:X}", ch1, ch2)));
+			)
+			else (
+				x.buffer.utf <- true;
+				x.buffer.pos <- 2;
+				x.col <- 0;
+				x.NextCh();
+			)
+		)
+		else (x.buffer.utf <- false; x.col <- 0; x.buffer.pos <- 0;)
+
+	member x.AddCh() = 
+		-->casing2
+		x.NextCh()
+
+	member x.NextCh() =
+		if x.oldEols > 0 then ( x.ch <- int x.EOL; x.oldEols <- post_dec x.oldEols)
+		else ( x.ch <- int(x.buffer.Read()); 
+			x.buffer.pos <- post_inc x.buffer.pos;
+	        if x.ch = int x.EOL then (x.line <- post_inc x.line; x.lineStart <- x.buffer.pos + 1))
+		-->casing1
+		
+	-->comments
+
+
+
+	member x.checkLiteral (lit:string) def=
+	-->literals
+
+
+	member x.resolveKind(value:int) = 
+		match value with
+	      -1 -> x.eofSym
+	    |  0 -> x.noSym
+-->scan2
+	    | _ -> raise (new Exception("resolveKind unknown kind"))
+
+
+	member x.NextToken() = 
+		try
+                            while x.ch = int ' ' || -->scan3 do  x.NextCh() done;
+			-->scan1
+                                    let _pos = x.buffer.pos in
+                                    let _col = x.buffer.pos - x.lineStart + 1 in
+                                    let _line = x.line in
+                                    let ccode= x.ch in
+                                    ignore (x.tval.Clear());
+                                    x.AddCh();
+                            try
+                                    let kind = x.resolveKind (x.start.Item(ccode)) in
+                                    let t = new Token(kind,_pos,_col,_line,x.tval.ToString(),None) in t
+                            with
+                                    Result (value,kind) -> let t = new Token(kind,_pos,_col,_line,value,None) in t
+		with _ -> (fprintf stdout "Char not recognized at line %d" x.line; exit 1;);
+
+	member x.Extract_token t =
+		match t with 
+		  None -> raise (new Exception("Impossible extract_token")) 
+		| Some c -> c
+		
+		
+	member x.Scan() =
+		if x.tokens.next = None
+		then x.NextToken()
+		else 
+			(
+				x.pt <- x.Extract_token x.tokens.next;
+				x.tokens <- x.Extract_token x.tokens.next;
+				x.tokens;
+			)
+			
+
+	member x.Peek() =
+		if x.pt.next = None 
+		then (  
+				x.pt <- x.NextToken(); 
+				x.pt.next <- (Some x.pt);
+				if x.pt.kind <= x.maxT then x.pt else x.Peek()
+			)
+		else (x.pt <- x.Extract_token x.pt.next; 
+						if x.pt.kind <= x.maxT 
+						then x.pt else x.Peek ()
+			)
+			
+	new (tr:TextReader) = {
+		buffer = new Buffer(tr);
+		EOL = '\n'; 
+		eofSym = 0;
+		-->declarations
+		t = new Token (0,0,0,0,"dummy",None); //{kind = 0; pos = 0; col = 0; line = 0; value = "dummy"; next = None};
+		ch = int '\n'; //starts the current character with the value os new line
+		col = 0;
+		line = 1;
+		oldEols = 0;
+		lineStart = 0;
+		tval = new StringBuilder();
+		Impossible = new System.Exception();
+		tokens = new Token (0,0,0,0,"dummy",None);
+		pt = new Token (0,0,0,0,"dummy",None);
+		start =  new Dictionary<int, int>(128);
+		tlen = 0;
+		}
+end
+ 
+$$$

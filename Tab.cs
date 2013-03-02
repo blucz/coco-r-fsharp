@@ -209,10 +209,6 @@ public class CharClass {
 //=====================================================================
 
 public class Tab {
-	//altered
-    public Position semDeclPos1;       // position of class variables
-    public Position semDeclPos2;       // position of initialization variables
-
     public Position semDeclPos;       // position of global semantic expressions
 	public CharSet ignored;           // characters ignored by the scanner
 	public bool[] ddt = new bool[10]; // debug and test switches

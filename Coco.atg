@@ -43,7 +43,7 @@ COMPILER Coco
 	public TextWriter trace;    // other Coco objects referenced in this ATG
 	public Tab tab;
 	public DFA dfa;
-	public ParserOutput pgen;
+	public ParserGen pgen;
 
 	bool   genScanner;
 	string tokenString;         // used in declarations of literal tokens
@@ -92,13 +92,6 @@ Coco                            (. Symbol sym; Graph g, g1, g2; string gramName;
                                  .)
   { ANY }                       (. tab.semDeclPos = new Position(beg, la.pos-beg, 0); 
 								   beg = la.pos + la.val.Length;.)
-   ["VARIABLES"
-   {ANY} (. tab.semDeclPos1 = new Position(beg, la.pos-beg, 0);
-            beg = la.pos + la.val.Length; .)
-  
-  "INITVARIABLES" 
-  {ANY} (.tab.semDeclPos2 = new Position(beg, la.pos-beg, 0);  .)                        
-  ]
   [ "IGNORECASE"                (. dfa.ignoreCase = true; .) ]   /* pdt */
   [ "CHARACTERS" { SetDecl }]
   [ "TOKENS"  { TokenDecl<Node.t> }]

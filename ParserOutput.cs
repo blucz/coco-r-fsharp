@@ -33,6 +33,9 @@ using System.IO;
 using System.Collections;
 using System.Text;
 
+#pragma warning disable 0414
+#pragma warning disable 0219
+
 namespace at.jku.ssw.Coco
 {
 
@@ -195,7 +198,7 @@ namespace at.jku.ssw.Coco
                     {
                         if (s[sym.n])
                         {
-                            gen.Append("x.la.kind = " + sym.n);
+                            gen.Append("la.kind = " + sym.n);
                             --n;
                             if (n > 0) gen.Append(" || ");
                         }
@@ -288,7 +291,7 @@ namespace at.jku.ssw.Coco
                             s1 = tab.First(p);
                             bool equal = Sets.Equals(s1, isChecked);
                             bool useSwitch = UseSwitch(p);
-                            if (useSwitch) { Indent(indent); gen.AppendLine("match x.la.kind with"); }
+                            if (useSwitch) { Indent(indent); gen.AppendLine("match la.kind with"); }
                             p2 = p;
                             while (p2 != null)
                             {
@@ -382,46 +385,26 @@ namespace at.jku.ssw.Coco
             foreach (Symbol sym in tab.terminals)
             {
                 if (Char.IsLetter(sym.name[0]))
-                    gen.AppendLine("\tval _" + sym.name + " : int;");
+                    gen.AppendLine("\tlet _" + sym.name + " : int = " + sym.n);
             }
-            gen.AppendLine("\tval maxT :int;");
+            gen.AppendLine("\t\tlet maxT: int = " + (tab.terminals.Count - 1));
         }
-        void GenTokens2()
-        {
-            foreach (Symbol sym in tab.terminals)
-            {
-                if (Char.IsLetter(sym.name[0]))
-                    gen.AppendLine("\t\t_" + sym.name + " = " + sym.n + ";");
-            }
-            gen.AppendLine("\t\tmaxT = " + (tab.terminals.Count - 1) + ";");
-        }
-
-
-
 
         void GenPragmas()
         {
             foreach (Symbol sym in tab.pragmas)
             {
-                gen.AppendLine("\tval _" + sym.name + " : int");
+                gen.AppendLine("\tlet _" + sym.name + " : int = " + sym.n);
             }
         }
 
-
-        void GenPragmas2()
-        {
-            foreach (Symbol sym in tab.pragmas)
-            {
-                gen.AppendLine("\t _" + sym.name + " = " + sym.n + ";");
-            }
-        }
 
         void GenCodePragmas()
         {
 
             foreach (Symbol sym in tab.pragmas)
             {
-                gen.AppendLine("\t\t\t\tif (x.la.kind = " + sym.n + ") then (");
+                gen.AppendLine("\t\t\t\tif (la.kind = " + sym.n + ") then (");
                 CopySourcePart(sym.semPos, 4);
                 gen.AppendLine("\t\t\t\t);");
             }
@@ -450,12 +433,12 @@ namespace at.jku.ssw.Coco
                 int j = 0;
                 foreach (Symbol sym in tab.terminals)
                 {
-                    if (s[sym.n]) gen.Append("x.T;"); else gen.Append("x.x;");
+                    if (s[sym.n]) gen.Append("true;"); else gen.Append("false;");
                     ++j;
                     if (j % 4 == 0) gen.Append(" ");
                 }
-                if (i == symSet.Count - 1) gen.AppendLine("x.x|] in x.Find(b,t)");
-                else gen.AppendLine("x.x|] in x.Find(b,t)");
+                if (i == symSet.Count - 1) gen.AppendLine("false|] in x.Find(b,t)");
+                else gen.AppendLine("false|] in x.Find(b,t)");
             }
         }
 
@@ -506,7 +489,7 @@ namespace at.jku.ssw.Coco
             /* AW open namespace, if it exists */
             if (tab.nsName != null && tab.nsName.Length > 0)
             {
-                gen.AppendLine("namespace " + tab.nsName);
+                gen.AppendLine("module " + tab.nsName + ".Parser");
                 gen.AppendLine();
             }
             
@@ -516,14 +499,9 @@ namespace at.jku.ssw.Coco
             int posicao = gen.Length;
 
 
-            CopyFramePart("-->constants1");
+            CopyFramePart("-->constants");
             GenTokens(); 
             GenPragmas(); /* ML 2005/09/23 write the pragma kinds */
-            CopyFramePart("-->variables"); CopySourcePart(tab.semDeclPos1, 0);
-            CopyFramePart("-->initvariables"); CopySourcePart(tab.semDeclPos2, 0);
-            CopyFramePart("-->constants2");
-            GenTokens2(); /*initialize tokens*/
-            GenPragmas2();
             CopyFramePart("-->declarations"); CopySourcePart(tab.semDeclPos, 0);
             CopyFramePart("-->pragmas"); GenCodePragmas();
             CopyFramePart("-->productions"); GenProductions();
