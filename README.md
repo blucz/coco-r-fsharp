@@ -3,8 +3,8 @@ Coco/R for F#
 
 If you've tried to use the official Coco/R F# port and found that it generates broken F# code, you've come to the right place. 
 
-Note: I didn't design Coco/R. All I did here is improve the F# code output bit. For more information on the project 
-as a whole, please see http://www.ssw.uni-linz.ac.at/coco/
+Note: I didn't design Coco/R. All I did here is improve the F# code generator. For more information on the project 
+as a whole, see http://www.ssw.uni-linz.ac.at/coco/
 
 Features:
 - generates code that works with current F# compilers
