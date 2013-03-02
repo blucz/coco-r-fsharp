@@ -89,7 +89,7 @@ namespace at.jku.ssw.Coco {
         }
 	
 	private string ChCond(char ch) {
-	    return String.Format("x.ch = {0}", Ch(ch));
+	    return String.Format("ch = {0}", Ch(ch));
 	}
 
 
@@ -97,9 +97,9 @@ namespace at.jku.ssw.Coco {
         {
             for (CharSet.Range r = s.head; r != null; r = r.next)
             {
-                if (r.from == r.to) { gen.Write("x.ch = " + Ch(r.from)); }
-                else if (r.from == 0) { gen.Write("x.ch <= " + Ch(r.to)); }
-                else { gen.Write("x.ch >= " + Ch(r.from) + " && x.ch <= " + Ch(r.to)); }
+                if (r.from == r.to) { gen.Write("ch = " + Ch(r.from)); }
+                else if (r.from == 0) { gen.Write("ch <= " + Ch(r.to)); }
+                else { gen.Write("ch >= " + Ch(r.from) + " && ch <= " + Ch(r.to)); }
                 if (r.next != null) gen.Write(" || ");
             }
         }
@@ -122,13 +122,13 @@ namespace at.jku.ssw.Coco {
 	    // print ranges
 	    if (top == 1 && lo[0] == 0 && hi[1] == max-1 && hi[0]+2 == lo[1]) {
 		BitArray s1 = new BitArray(max); s1[hi[0]+1] = true;
-		gen.Write("not"); PutRange(s1); gen.Write(" && x.ch <> x.buffer.EOF");
+		gen.Write("not"); PutRange(s1); gen.Write(" && ch <> EOF");
 	    } else {
 		gen.Write("(");
 		for (i = 0; i <= top; i++) {
-		    if (hi[i] == lo[i]) gen.Write("x.ch = {0}", Ch((char)lo[i]));
-		    else if (lo[i] == 0) gen.Write("x.ch <= {0}", Ch((char)hi[i]));
-		    else gen.Write("x.ch >= {0} && x.ch <= {1}", Ch((char)lo[i]), Ch((char)hi[i]));
+		    if (hi[i] == lo[i]) gen.Write("ch = {0}", Ch((char)lo[i]));
+		    else if (lo[i] == 0) gen.Write("ch <= {0}", Ch((char)hi[i]));
+		    else gen.Write("ch >= {0} && ch <= {1}", Ch((char)lo[i]), Ch((char)hi[i]));
 		    if (i < top) gen.Write(" || ");
 		}
 		gen.Write(")");
@@ -146,7 +146,7 @@ namespace at.jku.ssw.Coco {
 	    if (com.stop.Length == 1) {
         gen.WriteLine("\t\t\t\t\t\t level := post_dec !level;"); ;
         gen.WriteLine("\t\t\t\t\t\t if !level = 0 then( ");
-        gen.WriteLine("\t\t\t\t\t\t\t x.oldEols <- x.line - line0;  ");
+        gen.WriteLine("\t\t\t\t\t\t\t oldEols <- line - line0;  ");
         gen.WriteLine("\t\t\t\t\t\t\t x.NextCh(); ");
         gen.WriteLine("\t\t\t\t\t\t\t result := true; ");
         gen.WriteLine("\t\t\t\t\t\t\t more:= false )");
@@ -158,7 +158,7 @@ namespace at.jku.ssw.Coco {
 		gen.WriteLine("\t\t\t\t\tif ({0}) then (", ChCond(com.stop[1]));
         gen.WriteLine("\t\t\t\t\t\t level := post_dec !level;");
         gen.WriteLine("\t\t\t\t\t\t if !level = 0 then( ");
-        gen.WriteLine("\t\t\t\t\t\t\t x.oldEols <- x.line - line0;  ");
+        gen.WriteLine("\t\t\t\t\t\t\t oldEols <- line - line0;  ");
         gen.WriteLine("\t\t\t\t\t\t\t x.NextCh(); ");
         gen.WriteLine("\t\t\t\t\t\t\t result := true; ");
         gen.WriteLine("\t\t\t\t\t\t\t more:= false )");
@@ -187,8 +187,8 @@ namespace at.jku.ssw.Coco {
 	    gen.WriteLine();
         gen.WriteLine("\tmember x.Comment{0}() =", i);
         gen.WriteLine("\t\tlet level = ref 1 in");
-        gen.WriteLine("\t\tlet line0 = x.line in");
-        gen.WriteLine("\t\tlet lineStart0 = x.lineStart in");
+        gen.WriteLine("\t\tlet line0 = line in");
+        gen.WriteLine("\t\tlet lineStart0 = lineStart in");
         gen.WriteLine("\t\tlet more = ref true in");
         gen.WriteLine("\t\tlet result = ref false in");
 	    if (com.start.Length == 1) {
@@ -200,12 +200,12 @@ namespace at.jku.ssw.Coco {
         gen.WriteLine("\t\t\tx.NextCh();");
 		GenComBody(com);
 		gen.WriteLine("\t\t) else (");
-        gen.WriteLine("\t\t\tif x.ch = int x.EOL then (");
+        gen.WriteLine("\t\t\tif ch = int EOL then (");
         gen.WriteLine("\t\t\t level := post_dec !level;");
-        gen.WriteLine("\t\t\tx.lineStart <- lineStart0 );");
+        gen.WriteLine("\t\t\tlineStart <- lineStart0 );");
 
-        gen.WriteLine("\t\t\t x.buffer.pos <- x.buffer.pos - 2;");
-        gen.WriteLine("\t\t\t  ignore (x.buffer.Read());");
+        gen.WriteLine("\t\t\t buffer.pos <- buffer.pos - 2;");
+        gen.WriteLine("\t\t\t  ignore (buffer.Read());");
         gen.WriteLine("\t\t\t x.NextCh();");
         gen.WriteLine("\t\t\t false )");
 
@@ -279,11 +279,11 @@ namespace at.jku.ssw.Coco {
 		gen.Write("\t\t\t\t\t");
 	    }
 	    if (endOf == null) {
-		gen.WriteLine(" x.noSym )");
+		gen.WriteLine(" noSym )");
 	    } else {
 
 		if (endOf.tokenKind == Symbol.classLitToken) {
-            gen.Write("x.checkLiteral (x.tval.ToString()) ");
+            gen.Write("x.checkLiteral (tval.ToString()) ");
             gen.WriteLine(" {0} )", endOf.n);
 		} else {
             gen.Write(" {0} ", endOf.n); 
@@ -329,9 +329,9 @@ namespace at.jku.ssw.Coco {
 	    StreamReader reader=new StreamReader(insertion);
 	    int[] startTab = new int[CharClass.charSetSize];
 	    FillStartTab(startTab);
-	    gen.WriteLine("charSetSize = {0};", CharClass.charSetSize);
-	    gen.WriteLine("\t\tmaxT = {0};", tab.terminals.Count - 1);
-        gen.WriteLine("\t\tnoSym = {0};", tab.noSym.n);
+	    gen.WriteLine("let charSetSize = {0}", CharClass.charSetSize);
+	    gen.WriteLine("\t\tlet maxT = {0}", tab.terminals.Count - 1);
+            gen.WriteLine("\t\tlet noSym = {0}", tab.noSym.n);
 	    gen.Flush();
 	    insertion.Seek(0,SeekOrigin.Begin);	    
 	    gen=oldGen;
@@ -345,7 +345,7 @@ namespace at.jku.ssw.Coco {
                 int targetState = action.target.state.nr;
                 if (action.typ == Node.chr)
                 {
-                    gen.WriteLine("\t\tx.start.Add(" + action.sym + "," + targetState + "); ");
+                    gen.WriteLine("\t\tstart.Add(" + action.sym + "," + targetState + "); ");
                 }
                 else
                 {
@@ -353,11 +353,11 @@ namespace at.jku.ssw.Coco {
                     for (CharSet.Range r = s.head; r != null; r = r.next)
                     {
                         gen.Write("\t\tfor i = " + r.from + " to " + r.to + " do ");
-                        gen.WriteLine("\t\tx.start.Add(i,"  + targetState + "); done;");
+                        gen.WriteLine("\t\tstart.Add(i,"  + targetState + "); done;");
                     }
                 }
             }
-            gen.WriteLine("\t\tx.start.Add(65535+1, -1);");
+            gen.WriteLine("\t\tstart.Add(65535+1, -1);");
         }
 
 
@@ -382,7 +382,7 @@ namespace at.jku.ssw.Coco {
 	    StreamReader reader=new StreamReader(insertion);
 	    if (ignoreCase) {
             gen.WriteLine(";");
-        gen.Write("\t\tif (x.ch <> x.buffer.EOF ) then x.ch <- int (char.ToLower(char x.ch))");
+        gen.Write("\t\tif (ch <> EOF ) then ch <- int (char.ToLower(char ch))");
 	    }
 	    gen.Flush();
 	    insertion.Seek(0,SeekOrigin.Begin);
@@ -394,7 +394,7 @@ namespace at.jku.ssw.Coco {
 	    StreamWriter oldGen=gen;
 	    gen=new StreamWriter(insertion);
 	    StreamReader reader=new StreamReader(insertion);
-        if (ignoreCase) gen.Write("	ignore(x.tval.Append(char.ToLower(char x.ch))); "); else gen.Write("ignore (x.tval.Append(char x.ch));");
+        if (ignoreCase) gen.Write("	ignore(tval.Append(char.ToLower(char ch))); "); else gen.Write("ignore (tval.Append(char ch));");
 	    gen.Flush();
 	    insertion.Seek(0,SeekOrigin.Begin);
 	    gen=oldGen;
