@@ -53,7 +53,7 @@ class
 end // Errors
 
 
-type parser(scan:scanner, errorstream:TextWriter) =
+type parser(scan:scanner) =
 class
 -->constants
 	let minErrDist:int              = 2
