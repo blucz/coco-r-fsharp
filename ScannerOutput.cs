@@ -138,80 +138,79 @@ namespace at.jku.ssw.Coco {
 	//------------------------ scanner generation ----------------------
 
 
-	void GenComBody(Comment com) {
-        gen.WriteLine("\t\t\t\t while !more do ");
-        gen.WriteLine("\t\t\t\t\t if ({0}) ", ChCond(com.stop[0]));
-        gen.WriteLine("\t\t\t\t\t then ( ");
+        void GenComBody(Comment com) {
+            gen.WriteLine("\t\t\t\t while !more do ");
+            gen.WriteLine("\t\t\t\t\t if ({0}) ", ChCond(com.stop[0]));
+            gen.WriteLine("\t\t\t\t\t then ( ");
 
-	    if (com.stop.Length == 1) {
-        gen.WriteLine("\t\t\t\t\t\t level := post_dec !level;"); ;
-        gen.WriteLine("\t\t\t\t\t\t if !level = 0 then( ");
-        gen.WriteLine("\t\t\t\t\t\t\t oldEols <- line - line0;  ");
-        gen.WriteLine("\t\t\t\t\t\t\t x.NextCh(); ");
-        gen.WriteLine("\t\t\t\t\t\t\t result := true; ");
-        gen.WriteLine("\t\t\t\t\t\t\t more:= false )");
+            if (com.stop.Length == 1) {
+                gen.WriteLine("\t\t\t\t\t\t level := post_dec !level;"); ;
+                gen.WriteLine("\t\t\t\t\t\t if !level = 0 then( ");
+                gen.WriteLine("\t\t\t\t\t\t\t oldEols <- line - line0;  ");
+                gen.WriteLine("\t\t\t\t\t\t\t x.NextCh(); ");
+                gen.WriteLine("\t\t\t\t\t\t\t result := true; ");
+                gen.WriteLine("\t\t\t\t\t\t\t more:= false )");
 
 
 
-	    } else {
-		gen.WriteLine("\t\t\t\t\tx.NextCh();");
-		gen.WriteLine("\t\t\t\t\tif ({0}) then (", ChCond(com.stop[1]));
-        gen.WriteLine("\t\t\t\t\t\t level := post_dec !level;");
-        gen.WriteLine("\t\t\t\t\t\t if !level = 0 then( ");
-        gen.WriteLine("\t\t\t\t\t\t\t oldEols <- line - line0;  ");
-        gen.WriteLine("\t\t\t\t\t\t\t x.NextCh(); ");
-        gen.WriteLine("\t\t\t\t\t\t\t result := true; ");
-        gen.WriteLine("\t\t\t\t\t\t\t more:= false )");
-        gen.WriteLine("\t\t\t\t\telse x.NextCh();");
-        gen.WriteLine("\t\t\t\t\t)");
-	    }
+            } else {
+                gen.WriteLine("\t\t\t\t\tx.NextCh();");
+                gen.WriteLine("\t\t\t\t\tif ({0}) then (", ChCond(com.stop[1]));
+                gen.WriteLine("\t\t\t\t\t\t level := post_dec !level;");
+                gen.WriteLine("\t\t\t\t\t\t if !level = 0 then( ");
+                gen.WriteLine("\t\t\t\t\t\t\t oldEols <- line - line0;  ");
+                gen.WriteLine("\t\t\t\t\t\t\t x.NextCh(); ");
+                gen.WriteLine("\t\t\t\t\t\t\t result := true; ");
+                gen.WriteLine("\t\t\t\t\t\t\t more:= false )");
+                gen.WriteLine("\t\t\t\t\telse x.NextCh();");
+                gen.WriteLine("\t\t\t\t\t)");
+            }
 
-	    if (com.nested) {
-		gen.WriteLine("\t\t\t\t\t ) else if ({0}) then (", ChCond(com.start[0])); 
-		if (com.start.Length == 1)
-            gen.WriteLine("\t\t\t\t\tlevel := post_inc !level; x.NextCh();");
-		else {
-		    gen.WriteLine("\t\t\t\t\tx.NextCh();");
-		    gen.WriteLine("\t\t\t\t\tif ({0}) then (", ChCond(com.start[1]));
-            gen.WriteLine("\t\t\t\t\t\t level := post_inc !level; x.NextCh();");
-		    gen.WriteLine("\t\t\t\t\t)");
-		}
-	    }
-	    gen.WriteLine("\t\t\t\t) else x.NextCh();");
-        gen.WriteLine("\t\t\t\t done;");
-        gen.WriteLine("\t\t\t\t !result;");
-	}
-	
+            if (com.nested) {
+                gen.WriteLine("\t\t\t\t\t ) else if ({0}) then (", ChCond(com.start[0])); 
+                if (com.start.Length == 1)
+                    gen.WriteLine("\t\t\t\t\tlevel := post_inc !level; x.NextCh();");
+                else {
+                    gen.WriteLine("\t\t\t\t\tx.NextCh();");
+                    gen.WriteLine("\t\t\t\t\tif ({0}) then (", ChCond(com.start[1]));
+                    gen.WriteLine("\t\t\t\t\t\t level := post_inc !level; x.NextCh();");
+                    gen.WriteLine("\t\t\t\t\t)");
+                }
+            }
+            gen.WriteLine("\t\t\t\t) else x.NextCh();");
+            gen.WriteLine("\t\t\t\t done;");
+            gen.WriteLine("\t\t\t\t !result;");
+        }
 
-	void GenComment(Comment com, int i) {
-	    gen.WriteLine();
-        gen.WriteLine("\tmember x.Comment{0}() =", i);
-        gen.WriteLine("\t\tlet level = ref 1 in");
-        gen.WriteLine("\t\tlet line0 = line in");
-        gen.WriteLine("\t\tlet lineStart0 = lineStart in");
-        gen.WriteLine("\t\tlet more = ref true in");
-        gen.WriteLine("\t\tlet result = ref false in");
-	    if (com.start.Length == 1) {
-		gen.WriteLine("\t\tx.NextCh();");
-		GenComBody(com);
-	    } else {
-        gen.WriteLine("\t\tx.NextCh();");
-		gen.WriteLine("\t\tif ({0}) \n\t\tthen (", ChCond(com.start[1]));
-        gen.WriteLine("\t\t\tx.NextCh();");
-		GenComBody(com);
-		gen.WriteLine("\t\t) else (");
-        gen.WriteLine("\t\t\tif ch = int EOL then (");
-        gen.WriteLine("\t\t\t level := post_dec !level;");
-        gen.WriteLine("\t\t\tlineStart <- lineStart0 );");
 
-        gen.WriteLine("\t\t\t buffer.pos <- buffer.pos - 2;");
-        gen.WriteLine("\t\t\t  ignore (buffer.Read());");
-        gen.WriteLine("\t\t\t x.NextCh();");
-        gen.WriteLine("\t\t\t false )");
+        void GenComment(Comment com, int i) {
+            gen.WriteLine();
+            gen.WriteLine("\tmember x.Comment{0}() =", i);
+            gen.WriteLine("\t\tlet level = ref 1 in");
+            gen.WriteLine("\t\tlet line0 = line in");
+            gen.WriteLine("\t\tlet lineStart0 = lineStart in");
+            gen.WriteLine("\t\tlet more = ref true in");
+            gen.WriteLine("\t\tlet result = ref false in");
+            gen.WriteLine("\t\tlet pos0 = buffer.pos in");
+            gen.WriteLine("\t\tlet ch0 = ch in");
+            if (com.start.Length == 1) {
+                gen.WriteLine("\t\tx.NextCh();");
+                GenComBody(com);
+            } else {
+                gen.WriteLine("\t\tx.NextCh();");
+                gen.WriteLine("\t\tif ({0}) \n\t\tthen (", ChCond(com.start[1]));
+                gen.WriteLine("\t\t\tx.NextCh();");
+                GenComBody(com);
+                gen.WriteLine("\t\t) else (");
+                gen.WriteLine("\t\t\tlineStart <- lineStart0;");
+                gen.WriteLine("\t\t\tbuffer.pos <- pos0;");
+                gen.WriteLine("\t\t\tch <- ch0;");
+                gen.WriteLine("\t\t\tline <- line0;");
+                gen.WriteLine("\t\t\t false )");
 
-	    }
-	    gen.WriteLine("\t");
-	}
+            }
+            gen.WriteLine("\t");
+        }
 
 		
 	string SymName(Symbol sym) {
