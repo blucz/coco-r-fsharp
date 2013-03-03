@@ -35,7 +35,10 @@ type Buffer(stream:Stream) =
 class
 	let MAX_BUFFER_LENGTH : int     = 64 * 1024
 	let mutable utf : bool          = false
-        [<DefaultValue>] val mutable pos : int 
+
+        member x.pos
+            with get()      = stream.Position |> int
+            and  set(v:int) = stream.Position <- int64 v
 
 	member x.Read()= 
 		let ch = ref 0 in
@@ -69,10 +72,6 @@ class
                                     );
                             int !ch
                         end
-
-	member x.Peek_in() =
-            let pos = stream.Position in
-            let chr = x.Read() in stream.Position <- pos; chr
 end 
 
 type scanner(stream:Stream) =
@@ -86,16 +85,16 @@ class
 	let mutable oldEols : int                       = 0
 	let mutable tval : StringBuilder                = new StringBuilder()
 	let mutable start : Dictionary<int, int>        = new Dictionary<int,int>(128)
-	let mutable tokens : Token                      = new Token (0,0,0,0,"dummy",None)
-	let mutable pt : Token                          = new Token (0,0,0,0,"dummy",None)
 	let mutable tlen : int                          = 0
 	let Impossible : System.Exception               = new System.Exception ()
 	let mutable lineStart : int                     = 0
+        let mutable peeks   : Token list                = []
+        let mutable curpeek : Token list                = []
 
         let nextch () = 
             if oldEols > 0 then ( ch <- int EOL; oldEols <- post_dec oldEols)
             else ( ch <- int(buffer.Read()); 
-                    buffer.pos <- post_inc buffer.pos;
+                    //buffer.pos <- post_inc buffer.pos; nonsense!
             if ch = int EOL then (line <- post_inc line; lineStart <- buffer.pos + 1))
             -->casing1
 
@@ -105,24 +104,6 @@ class
 		for i = 0 to EOF-2 do 
 			if start.ContainsKey(i)=false then start.Add(i,0); 
 		done;
-
-		nextch();
-		if (ch = 0xEF)
-		then(  // check optional byte order mark for UTF-8
-			nextch();
-			let ch1 = ch in
-			nextch();
-			let ch2 = ch in
-			if (ch1 <> 0xBB || ch2 <> 0xBF) then(
-					raise (new Exception (String.Format("illegal byte order mark: EF {0,2:X} {1,2:X}", ch1, ch2)));
-			)
-			else (
-				buffer.pos <- 2;
-				col <- 0;
-				nextch();
-			)
-		)
-		else (col <- 0; buffer.pos <- 0;)
         )
 
 	member x.AddCh() = 
@@ -164,34 +145,18 @@ class
                                     Result (value,kind) -> let t = new Token(kind,_pos,_col,_line,value,None) in t
 		with _ -> (fprintf stdout "Char (%d) not recognized at line %d" (int ch) line; exit 1;);
 
-	member x.Extract_token t =
-		match t with 
-		  None -> raise (new Exception("Impossible extract_token")) 
-		| Some c -> c
-		
-		
-	member x.Scan() =
-		if tokens.next = None
-		then x.NextToken()
-		else 
-			(
-				pt <- x.Extract_token tokens.next;
-				tokens <- x.Extract_token tokens.next;
-				tokens;
-			)
-			
+        member x.Scan()      =
+            match peeks with
+                | []     -> x.NextToken()
+                | hd::tl -> peeks <- tl; curpeek <- tl; hd
 
-	member x.Peek() =
-		if pt.next = None 
-		then (  
-				pt <- x.NextToken(); 
-				pt.next <- (Some pt);
-				if pt.kind <= maxT then pt else x.Peek()
-			)
-		else (pt <- x.Extract_token pt.next; 
-						if pt.kind <= maxT 
-						then pt else x.Peek ()
-			)			
+        member x.Peek()      = 
+            match curpeek with 
+                | []     -> let tok = x.NextToken() in 
+                            peeks <- peeks @ [tok]; tok
+                | hd::tl -> curpeek <- tl; hd
+
+        member x.ResetPeek() = curpeek <- peeks
 end
  
 $$$
