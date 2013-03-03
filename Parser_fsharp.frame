@@ -43,7 +43,9 @@ class
 -->errors
 			| _ -> "error " + (n.ToString())
 		in
-                        errors.Add(Error(line,col,s));
+                        errors.Add(Error(line,col,s))//;
+                        //printfn "error at %d,%d -- %s\n%s" line col s Environment.StackTrace;
+                        //raise (new Exception())
 	
 	member x.SemErr ((line:int), (col:int), (s:string)) = errors.Add(Error(line,col,s));
 	member x.SemErr (s:string) = errors.Add(Error(0,0,s));
