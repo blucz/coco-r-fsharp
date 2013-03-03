@@ -325,7 +325,7 @@ namespace at.jku.ssw.Coco
                             Indent(indent);
                             if (equal)
                             {
-                                gen.AppendLine(");");
+                                if (!useSwitch) gen.AppendLine(");");
                             }
                             else
                             {
@@ -360,9 +360,9 @@ namespace at.jku.ssw.Coco
                                 s1 = tab.First(p2);
                                 GenCond(s1, p2);
                             }
-                            gen.AppendLine(") do ");
+                            gen.AppendLine(") do (");
                             GenCode(p2, indent + 1, s1);
-                            Indent(indent); gen.AppendLine(" done;");
+                            Indent(indent); gen.AppendLine(") done;");
                             break;
                         }
                     case Node.opt:

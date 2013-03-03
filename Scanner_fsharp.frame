@@ -35,46 +35,44 @@ type Buffer(stream:Stream) =
 class
 	let MAX_BUFFER_LENGTH : int     = 64 * 1024
 	let mutable utf : bool          = false
-
-        member x.pos 
-            with get ()          = stream.Position |> int
-            and  set (value:int) = stream.Position <- int64 value 
+        [<DefaultValue>] val mutable pos : int 
 
 	member x.Read()= 
 		let ch = ref 0 in
                         ch := stream.ReadByte();
-		
-			while((!ch >= 128) && ((!ch &&& 0xC0) <> 0xC0) && (!ch <> EOF)) do
-				ch:= stream.ReadByte();
-			done;
+                        if !ch = -1 then EOF else begin 
+                            while((!ch >= 128) && ((!ch &&& 0xC0) <> 0xC0) && (!ch <> EOF)) do
+                                    ch:= stream.ReadByte();
+                            done;
 
-			if (!ch >= 128 || !ch <>  EOF) then (*If char is minor to 128 or equals to EOF then ther's nothing to do*)
-				// nothing to do, first 127 chars are the same in ascii and utf8
-				// 0xxxxxxx or end of file character
-			if ((!ch &&& 0xF0) = 0xF0) then
-				// 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-				let c1 = !ch &&& 0x07 in ch :=  stream.ReadByte();
-				let c2 = !ch &&& 0x3F in ch :=  stream.ReadByte();
-				let c3 = !ch &&& 0x3F in ch :=  stream.ReadByte();
-				let c4 = !ch &&& 0x3F in
-				ch := (((((c1 <<< 6) ||| c2) <<< 6) ||| c3) <<< 6) ||| c4;
-			else if ((!ch &&& 0xE0) = 0xE0) then
-				// 1110xxxx 10xxxxxx 10xxxxxx
-				let c1 = !ch &&& 0x0F in ch :=  stream.ReadByte();
-				let c2 = !ch &&& 0x3F in ch :=  stream.ReadByte();
-				let c3 = !ch &&& 0x3F in
-				ch := (((c1 <<< 6) ||| c2) <<< 6) ||| c3;
-			else if ((!ch &&& 0xC0) = 0xC0) then (
-				// 110xxxxx 10xxxxxx
-				let c1 = !ch &&& 0x1F in ch :=  stream.ReadByte();
-				let c2 = !ch &&& 0x3F in
-				ch := (c1 <<< 6) ||| c2;
-				);
-			int !ch
+                            if (!ch >= 128 || !ch <>  EOF) then (*If char is minor to 128 or equals to EOF then ther's nothing to do*)
+                                    // nothing to do, first 127 chars are the same in ascii and utf8
+                                    // 0xxxxxxx or end of file character
+                            if ((!ch &&& 0xF0) = 0xF0) then
+                                    // 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+                                    let c1 = !ch &&& 0x07 in ch :=  stream.ReadByte();
+                                    let c2 = !ch &&& 0x3F in ch :=  stream.ReadByte();
+                                    let c3 = !ch &&& 0x3F in ch :=  stream.ReadByte();
+                                    let c4 = !ch &&& 0x3F in
+                                    ch := (((((c1 <<< 6) ||| c2) <<< 6) ||| c3) <<< 6) ||| c4;
+                            else if ((!ch &&& 0xE0) = 0xE0) then
+                                    // 1110xxxx 10xxxxxx 10xxxxxx
+                                    let c1 = !ch &&& 0x0F in ch :=  stream.ReadByte();
+                                    let c2 = !ch &&& 0x3F in ch :=  stream.ReadByte();
+                                    let c3 = !ch &&& 0x3F in
+                                    ch := (((c1 <<< 6) ||| c2) <<< 6) ||| c3;
+                            else if ((!ch &&& 0xC0) = 0xC0) then (
+                                    // 110xxxxx 10xxxxxx
+                                    let c1 = !ch &&& 0x1F in ch :=  stream.ReadByte();
+                                    let c2 = !ch &&& 0x3F in
+                                    ch := (c1 <<< 6) ||| c2;
+                                    );
+                            int !ch
+                        end
 
 	member x.Peek_in() =
-			let pos = stream.Position in
-			let chr = x.Read() in stream.Position <- pos; chr
+            let pos = stream.Position in
+            let chr = x.Read() in stream.Position <- pos; chr
 end 
 
 type scanner(stream:Stream) =
@@ -164,7 +162,7 @@ class
                                     let t = new Token(kind,_pos,_col,_line,tval.ToString(),None) in t
                             with
                                     Result (value,kind) -> let t = new Token(kind,_pos,_col,_line,value,None) in t
-		with _ -> (fprintf stdout "Char not recognized at line %d" line; exit 1;);
+		with _ -> (fprintf stdout "Char (%d) not recognized at line %d" (int ch) line; exit 1;);
 
 	member x.Extract_token t =
 		match t with 
