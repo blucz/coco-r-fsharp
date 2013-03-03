@@ -291,7 +291,7 @@ namespace at.jku.ssw.Coco
                             s1 = tab.First(p);
                             bool equal = Sets.Equals(s1, isChecked);
                             bool useSwitch = UseSwitch(p);
-                            if (useSwitch) { Indent(indent); gen.AppendLine("match la.kind with"); }
+                            if (useSwitch) { Indent(indent); gen.AppendLine("(match la.kind with"); }
                             p2 = p;
                             while (p2 != null)
                             {
@@ -325,7 +325,8 @@ namespace at.jku.ssw.Coco
                             Indent(indent);
                             if (equal)
                             {
-                                if (!useSwitch) gen.AppendLine(");");
+                                if (!useSwitch) 
+                                    gen.AppendLine(");");
                             }
                             else
                             {
@@ -339,6 +340,9 @@ namespace at.jku.ssw.Coco
                                 {
                                     gen.Append(") "); gen.AppendLine("else x.SynErr(" + errorNr + ");");
                                 }
+                            }
+                            if (useSwitch) {
+                                gen.Append(");");
                             }
                             break;
                         }
