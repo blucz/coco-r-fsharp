@@ -327,6 +327,8 @@ namespace at.jku.ssw.Coco
                             {
                                 if (!useSwitch) 
                                     gen.AppendLine(");");
+                                else
+                                    gen.AppendLine("|_-> failwith \"impossible\"");
                             }
                             else
                             {
