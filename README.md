@@ -16,10 +16,9 @@ as a whole, see http://www.ssw.uni-linz.ac.at/coco/
 
 ### Misfeatures:
 
-- Like the official port, this generates code in the old-style "heavyweight" syntax. This generates a compiler warning, 
-  and requires your semantic actions to be written in that style. 
-- Neither the generated code nor the .frame files are written in modern idiomatic F#. They are heavily derived from the 
-  original port which, dating back to 2007, is strongly influenced by OCaml practices.
+- Like the official port, this generates code in "Verbose syntax" mode. This causes a compiler warning.
+- All F# code embedded in your .atg file must be written in "Verbose syntax" mode.
+- Much of the code comes from the original 2007 Coco/R F# port, and is quite awkward compared to modern F# code.
 
 ### Building:
 
