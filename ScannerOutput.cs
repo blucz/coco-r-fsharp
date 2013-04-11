@@ -139,7 +139,7 @@ namespace at.jku.ssw.Coco {
 
 
         void GenComBody(Comment com) {
-            gen.WriteLine("\t\t\t\t while !more do ");
+            gen.WriteLine("\t\t\t\t while !more  && ch <> EOF do ");
             gen.WriteLine("\t\t\t\t\t if ({0}) ", ChCond(com.stop[0]));
             gen.WriteLine("\t\t\t\t\t then ( ");
 
