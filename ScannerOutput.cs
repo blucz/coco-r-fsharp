@@ -139,29 +139,29 @@ namespace at.jku.ssw.Coco {
 
 
         void GenComBody(Comment com) {
-            gen.WriteLine("\t\t\t\t while !more  && ch <> EOF do ");
+            gen.WriteLine("\t\t\t\t while more.Value  && ch <> EOF do ");
             gen.WriteLine("\t\t\t\t\t if ({0}) ", ChCond(com.stop[0]));
             gen.WriteLine("\t\t\t\t\t then ( ");
 
             if (com.stop.Length == 1) {
-                gen.WriteLine("\t\t\t\t\t\t level := post_dec !level;"); ;
-                gen.WriteLine("\t\t\t\t\t\t if !level = 0 then( ");
+                gen.WriteLine("\t\t\t\t\t\t level.Value <- post_dec level.Value;"); ;
+                gen.WriteLine("\t\t\t\t\t\t if level.Value = 0 then( ");
                 gen.WriteLine("\t\t\t\t\t\t\t oldEols <- line - line0;  ");
                 gen.WriteLine("\t\t\t\t\t\t\t x.NextCh(); ");
-                gen.WriteLine("\t\t\t\t\t\t\t result := true; ");
-                gen.WriteLine("\t\t\t\t\t\t\t more:= false )");
+                gen.WriteLine("\t\t\t\t\t\t\t result.Value <- true; ");
+                gen.WriteLine("\t\t\t\t\t\t\t more.Value <- false )");
 
 
 
             } else {
                 gen.WriteLine("\t\t\t\t\tx.NextCh();");
                 gen.WriteLine("\t\t\t\t\tif ({0}) then (", ChCond(com.stop[1]));
-                gen.WriteLine("\t\t\t\t\t\t level := post_dec !level;");
-                gen.WriteLine("\t\t\t\t\t\t if !level = 0 then( ");
+                gen.WriteLine("\t\t\t\t\t\t level.Value <- post_dec level.Value;");
+                gen.WriteLine("\t\t\t\t\t\t if level.Value = 0 then( ");
                 gen.WriteLine("\t\t\t\t\t\t\t oldEols <- line - line0;  ");
                 gen.WriteLine("\t\t\t\t\t\t\t x.NextCh(); ");
-                gen.WriteLine("\t\t\t\t\t\t\t result := true; ");
-                gen.WriteLine("\t\t\t\t\t\t\t more:= false )");
+                gen.WriteLine("\t\t\t\t\t\t\t result.Value <- true; ");
+                gen.WriteLine("\t\t\t\t\t\t\t more.Value <- false )");
                 gen.WriteLine("\t\t\t\t\telse x.NextCh();");
                 gen.WriteLine("\t\t\t\t\t)");
             }
@@ -169,17 +169,17 @@ namespace at.jku.ssw.Coco {
             if (com.nested) {
                 gen.WriteLine("\t\t\t\t\t ) else if ({0}) then (", ChCond(com.start[0])); 
                 if (com.start.Length == 1)
-                    gen.WriteLine("\t\t\t\t\tlevel := post_inc !level; x.NextCh();");
+                    gen.WriteLine("\t\t\t\t\tlevel.Value <- post_inc level.Value; x.NextCh();");
                 else {
                     gen.WriteLine("\t\t\t\t\tx.NextCh();");
                     gen.WriteLine("\t\t\t\t\tif ({0}) then (", ChCond(com.start[1]));
-                    gen.WriteLine("\t\t\t\t\t\t level := post_inc !level; x.NextCh();");
+                    gen.WriteLine("\t\t\t\t\t\t level.Value <- post_inc level.Value; x.NextCh();");
                     gen.WriteLine("\t\t\t\t\t)");
                 }
             }
             gen.WriteLine("\t\t\t\t) else x.NextCh();");
             gen.WriteLine("\t\t\t\t done;");
-            gen.WriteLine("\t\t\t\t !result;");
+            gen.WriteLine("\t\t\t\t result.Value;");
         }
 
 
@@ -260,9 +260,9 @@ namespace at.jku.ssw.Coco {
         }
 		gen.Write(") then (");
 		if (action.tc == Node.contextTrans) {
-		    gen.Write("apx:=apx+1; "); ctxEnd = false;
+		    gen.Write("apx.Value <- apx+1; "); ctxEnd = false;
 		} else if (state.ctx)
-		    gen.Write("apx := 0; ");
+		    gen.Write("apx.Value <- 0; ");
 		gen.Write("x.AddCh(); x.resolveKind {0};", action.target.state.nr);
 		gen.WriteLine(")");
 	    }
@@ -272,9 +272,9 @@ namespace at.jku.ssw.Coco {
 		gen.Write("\t\t\t\telse (");
 	    if (ctxEnd) { // final context state: cut appendix
 		gen.WriteLine();
-		gen.WriteLine("\t\t\t\t\ttlen := tlen- apx;");
-		gen.WriteLine("\t\t\t\t\tpos := pos - apx - 1; line = t.line;");
-		gen.WriteLine("\t\t\t\t\tbuffer.Pos := pos + 1; x.NextCh();");
+		gen.WriteLine("\t\t\t\t\ttlen.Value <- tlen- apx;");
+		gen.WriteLine("\t\t\t\t\tpos.Value <- pos - apx - 1; line = t.line;");
+		gen.WriteLine("\t\t\t\t\tbuffer.Pos.Value <- pos + 1; x.NextCh();");
 		gen.Write("\t\t\t\t\t");
 	    }
 	    if (endOf == null) {
